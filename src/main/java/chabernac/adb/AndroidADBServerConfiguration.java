@@ -12,76 +12,79 @@ import chabernac.portforward.PortForward;
 import chabernac.utils.ArgsInterPreter;
 
 public class AndroidADBServerConfiguration {
-  private static Logger LOGGER = Logger.getLogger(AndroidADBServerConfiguration.class);
-  private ScheduledExecutorService myScheduledExecutorService = null;
-  private PortForward myPortForward = null;
+    private static Logger            LOGGER                     = Logger.getLogger( AndroidADBServerConfiguration.class );
+    private ScheduledExecutorService myScheduledExecutorService = null;
+    private PortForward              myPortForward              = null;
+    private final int                serverPort;
 
+    private final AndroidUtils       myAndroidUtils;
 
-  private final AndroidUtils myAndroidUtils;
+    public AndroidADBServerConfiguration( AndroidUtils aAndroidUtils, int aServerPort ) {
+        super();
+        myAndroidUtils = aAndroidUtils;
+        serverPort = aServerPort;
+    }
 
-  public AndroidADBServerConfiguration( AndroidUtils aAndroidUtils ) {
-    super();
-    myAndroidUtils = aAndroidUtils;
-  }
+    public synchronized boolean start() {
+        if ( myPortForward == null ) {
+            myScheduledExecutorService = Executors.newScheduledThreadPool( 1 );
+            myScheduledExecutorService.scheduleAtFixedRate( new Runnable() {
+                public void run() {
+                    try {
+                        myAndroidUtils.startServer();
+                    } catch ( IOException e ) {
+                        LOGGER.error( "Unable to start adb server", e );
+                    }
+                }
+            }, 0, 30, TimeUnit.SECONDS );
 
-
-  public synchronized boolean start(){
-    if(myPortForward == null){
-      myScheduledExecutorService =  Executors.newScheduledThreadPool( 1 );
-      myScheduledExecutorService.scheduleAtFixedRate( new Runnable(){
-        public void run(){
-          try {
-            myAndroidUtils.startServer();
-          } catch ( IOException e ) {
-            LOGGER.error( "Unable to start adb server", e );
-          }
+            myPortForward = new PortForward( serverPort, "127.0.0.1", 5037 );
+            myPortForward.start( Executors.newCachedThreadPool() );
         }
-      }, 0 , 1 , TimeUnit.MINUTES);
-
-
-      myPortForward = new PortForward( 6037, "127.0.0.1", 5037 );
-      myPortForward.start( Executors.newCachedThreadPool() );
-    }
-    return myPortForward.isStarted();
-  }
-  
-  public synchronized boolean isStarted(){
-    if(myPortForward == null) return false;
-    return myPortForward.isStarted();
-  }
-
-  public synchronized void stop(){
-    if(isStarted()){
-      if(myScheduledExecutorService == null){
-        myScheduledExecutorService.shutdownNow();
-        myScheduledExecutorService = null;
-      }
-      if(myPortForward != null){
-        myPortForward.stop();
-      }
-    }
-  }
-  
-  public static void main(String args[]) throws IOException{
-    BasicConfigurator.configure();
-    ArgsInterPreter theInterPreter = new ArgsInterPreter( args );
-    if(!theInterPreter.containsKey( "adblocation" )){
-      System.out.println("You must provide the location of adb width adblocation=[path to adb]");
-      System.exit( -1 );
+        return myPortForward.isStarted();
     }
 
-    String theADBLocation = theInterPreter.getKeyValue( "adblocation" );
+    public synchronized boolean isStarted() {
+        if ( myPortForward == null ) return false;
+        return myPortForward.isStarted();
+    }
 
-    final AndroidADBServerConfiguration theConfig = new AndroidADBServerConfiguration( new AndroidUtils( theADBLocation ) );
-    
-    Runtime.getRuntime().addShutdownHook( new Thread(){
-      public void run(){
-       theConfig.stop(); 
-      }
-    });
-    
-    boolean isStarted = theConfig.start();
-    System.out.println("Android ADB server started: " + isStarted);
-    System.in.read();
-  }
+    public synchronized void stop() {
+        if ( isStarted() ) {
+            if ( myScheduledExecutorService == null ) {
+                myScheduledExecutorService.shutdownNow();
+                myScheduledExecutorService = null;
+            }
+            if ( myPortForward != null ) {
+                myPortForward.stop();
+            }
+        }
+    }
+
+    public static void main( String args[] ) throws IOException {
+        BasicConfigurator.configure();
+        ArgsInterPreter theInterPreter = new ArgsInterPreter( args );
+        if ( !theInterPreter.containsKey( "adblocation" ) ) {
+            System.out.println( "You must provide the location of adb width adblocation=[path to adb]" );
+            System.exit( -1 );
+        }
+
+        String theADBLocation = theInterPreter.getKeyValue( "adblocation" );
+        int thePort = Integer.parseInt( theInterPreter.getKeyValue( "port", "6037" ) );
+
+        final AndroidADBServerConfiguration theConfig = new AndroidADBServerConfiguration(
+                new AndroidUtils( theADBLocation ),
+                thePort );
+
+        Runtime.getRuntime().addShutdownHook( new Thread() {
+            @Override
+            public void run() {
+                theConfig.stop();
+            }
+        } );
+
+        boolean isStarted = theConfig.start();
+        System.out.println( "Android ADB server started: " + isStarted );
+        System.in.read();
+    }
 }

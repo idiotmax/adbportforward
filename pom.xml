@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>chabernac</groupId>
-	<artifactId>portforward</artifactId>
+	<artifactId>adbportforward</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>portforward</name>
@@ -37,7 +37,7 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-					<finalName>adbforward</finalName>
+					<finalName>adbportforward</finalName>
 					<archive>
 						<manifest>
 							<mainClass>chabernac.adb.ADBForward</mainClass>

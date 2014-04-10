@@ -1,0 +1,1 @@
+java -cp portforward-0.0.1-SNAPSHOT-jar-with-dependencies.jar chabernac.portforward.PortForwardStarter portforward.txt

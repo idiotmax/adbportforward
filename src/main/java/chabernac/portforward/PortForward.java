@@ -149,7 +149,7 @@ public class PortForward {
           myOutputStream.flush();
         }
       }catch(Throwable e){
-        LOGGER.error( "Error occured while copying stream " + PortForward.this.toString(), e );
+//        LOGGER.error( "Error occured while copying stream " + PortForward.this.toString(), e );
       }
       try {
         myQueue.put( Boolean.TRUE );
