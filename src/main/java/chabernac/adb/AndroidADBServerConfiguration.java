@@ -61,15 +61,26 @@ public class AndroidADBServerConfiguration {
         }
     }
 
+	private static String getAdbLocation() {
+		return System.getenv("ANDROID_HOME");
+	}
+
     public static void main( String args[] ) throws IOException {
         BasicConfigurator.configure();
-        ArgsInterPreter theInterPreter = new ArgsInterPreter( args );
-        if ( !theInterPreter.containsKey( "adblocation" ) ) {
-            System.out.println( "You must provide the location of adb width adblocation=[path to adb]" );
-            System.exit( -1 );
-        }
+		ArgsInterPreter theInterPreter = new ArgsInterPreter(args);
+		String adbLocation = null;
+		if (theInterPreter.containsKey("adblocation")) {
+			adbLocation = theInterPreter.getKeyValue("adblocation");
+		}
+		if (adbLocation == null || adbLocation.length() <= 0) {
+			adbLocation = getAdbLocation();
+		}
+		if (adbLocation == null || adbLocation.length() <= 0) {
+			System.out.println("You must provide the location of adb width adblocation=[path to adb]");
+			System.exit(-1);
+		}
 
-        String theADBLocation = theInterPreter.getKeyValue( "adblocation" );
+        String theADBLocation = adbLocation;
         int thePort = Integer.parseInt( theInterPreter.getKeyValue( "port", "6037" ) );
 
         final AndroidADBServerConfiguration theConfig = new AndroidADBServerConfiguration(

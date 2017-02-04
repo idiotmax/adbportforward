@@ -1,6 +1,7 @@
 package chabernac.adb;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -45,7 +46,7 @@ public class AndroidADBClientConfiguration {
 
     public synchronized void stop() {
         if ( isStarted() ) {
-            if ( myScheduledExecutorService == null ) {
+            if ( myScheduledExecutorService != null ) {
                 myScheduledExecutorService.shutdownNow();
                 myScheduledExecutorService = null;
             }
@@ -55,19 +56,30 @@ public class AndroidADBClientConfiguration {
         }
     }
 
+	private static String getAdbLocation() {
+		return System.getenv("ANDROID_HOME");
+	}
+
     public static void main( String args[] ) throws IOException {
         BasicConfigurator.configure();
-        ArgsInterPreter theInterPreter = new ArgsInterPreter( args );
-        if ( !theInterPreter.containsKey( "adblocation" ) ) {
-            System.out.println( "You must provide the location of adb width adblocation=[path to adb]" );
-            System.exit( -1 );
-        }
+		ArgsInterPreter theInterPreter = new ArgsInterPreter(args);
+		String adbLocation = null;
+		if (theInterPreter.containsKey("adblocation")) {
+			adbLocation = theInterPreter.getKeyValue("adblocation");
+		}
+		if (adbLocation == null || adbLocation.length() <= 0) {
+			adbLocation = getAdbLocation();
+		}
+		if (adbLocation == null || adbLocation.length() <= 0) {
+			System.out.println("You must provide the location of adb width adblocation=[path to adb]");
+			System.exit(-1);
+		}
         if ( !theInterPreter.containsKey( "remotehost" ) ) {
             System.out.println( "You must provide the remote host with remotehost=[remote host ip or dns name]" );
             System.exit( -1 );
         }
 
-        String theADBLocation = theInterPreter.getKeyValue( "adblocation" );
+        String theADBLocation = adbLocation;
         String theRemoteHost = theInterPreter.getKeyValue( "remotehost" );
         int theRemotePort = Integer.parseInt( theInterPreter.getKeyValue( "port", "6037" ) );
 

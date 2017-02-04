@@ -20,10 +20,15 @@ public class AndroidUtils {
     if(!anADBLocation.endsWith( "/" )){
       anADBLocation += "/";
     }
-    if(anADBLocation.endsWith( "platform-tools/" )) return anADBLocation;
-    if(anADBLocation.endsWith( "android-sdk/" )) return anADBLocation + "platform-tools/";
-    if(anADBLocation.endsWith( "android/" )) return anADBLocation + "android-sdk/platform-tools/";
-    return anADBLocation;
+	if (anADBLocation.endsWith("platform-tools/")) {
+	} else if (anADBLocation.endsWith("android-sdk/")) {
+      anADBLocation += "platform-tools/";
+	} else if (anADBLocation.endsWith("android/")) {
+      anADBLocation += "android-sdk/platform-tools/";
+	} else {
+      anADBLocation += "platform-tools/";
+	}
+    return anADBLocation + "adb ";
   }
 
   public String listDevices() throws IOException{
@@ -39,7 +44,7 @@ public class AndroidUtils {
   }
   
   private String executeAdbCommand(String aCommand) throws IOException{
-    String theCMD  = myADBLocation  + "adb " + aCommand;
+    String theCMD  = myADBLocation + aCommand;
     LOGGER.debug( "Executing '" + theCMD + "'" );
     Process theProcess = Runtime.getRuntime().exec(  theCMD );
     BufferedReader theReader = new BufferedReader( new InputStreamReader( theProcess.getInputStream() ) );

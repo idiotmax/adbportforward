@@ -38,25 +38,32 @@ public class PortForwardTest extends TestCase{
             theOutputStream.write(theBuffer, 0, theBytesRead);
           }
         } catch ( IOException e ) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
+		} finally {
+		  try {
+			theSeverSocket.close();
+		  } catch (IOException e) {
+		  }
+		}
       }
     });
     
     PortForward thePortForward = new PortForward( 7999, "localhost", 8999);
     assertTrue( thePortForward.start(theService) );
-    
+
     Socket theSocket = new Socket("localhost", 7999);
-    PrintWriter theWriter = new PrintWriter( new OutputStreamWriter( theSocket.getOutputStream() ) );
-    BufferedReader theReadear = new BufferedReader( new InputStreamReader( theSocket.getInputStream() ) );
-      
-    for(int i=0;i<100;i++){
-      String theString = "test string " + i;
-      theWriter.println( theString );
-      theWriter.flush();
-      assertEquals( theString, theReadear.readLine() );
-    }
+    try {
+		PrintWriter theWriter = new PrintWriter(new OutputStreamWriter(theSocket.getOutputStream()));
+		BufferedReader theReadear = new BufferedReader(new InputStreamReader(theSocket.getInputStream()));
+		for (int i = 0; i < 100; i++) {
+			String theString = "test string " + i;
+			theWriter.println(theString);
+			theWriter.flush();
+			assertEquals(theString, theReadear.readLine());
+		}
+    } catch(IOException e) {
+	} finally {
+		theSocket.close();
+	}
   }
 
 }
